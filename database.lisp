@@ -73,7 +73,7 @@
   (loop while fields
 	collecting (make-comparison-expr (pop fields) (pop fields))))
 
-(defun where (&rest clauses)
+(defmacro where (&rest clauses)
   `#'(lambda (cd) (and ,@(make-comparisons-list clauses))))
 
 (defun update (selector-fn &key title artist rating (ripped nil ripped-p))
