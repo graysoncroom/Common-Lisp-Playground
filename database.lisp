@@ -56,6 +56,7 @@
   #'(lambda (cd) (equal (getf cd :artist) artist)))
 |#
 
+#|
 (defun where (&key title artist rating (ripped nil ripped-p))
   #'(lambda (cd)
       (and
@@ -63,6 +64,17 @@
        (if artist   (equal (getf cd :artist) artist) t)
        (if rating   (equal (getf cd :rating) rating) t)
        (if ripped-p (equal (getf cd :ripped) ripped) t))))
+|#
+
+(defun make-comparison-expr (field value)
+  `(equal (getf cd ,field) ,value))
+
+(defun make-comparisons-list (fields)
+  (loop while fields
+	collecting (make-comparison-expr (pop fields) (pop fields))))
+
+(defun where (&rest clauses)
+  `#'(lambda (cd) (and ,@(make-comparisons-list clauses))))
 
 (defun update (selector-fn &key title artist rating (ripped nil ripped-p))
   (setf *db*
@@ -78,3 +90,4 @@
 
 (defun delete-rows (selector-fn)
   (setf *db* (remove-if selector-fn *db*)))
+
