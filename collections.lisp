@@ -140,3 +140,58 @@ does NOT return true.
 ;; Side note: Functions arguments are always pass by value
 
 ;;; Whole sequence Manipulations
+
+(reverse '(1 2 3)) ; ==> '(3 2 1)
+(copy-seq #(1 2 3))
+
+(concatenate 'vector #(1 2 3) '(4 5 6)) ; ==> #(1 2 3 4 5 6)
+(concatenate 'list #(1 2 3) '(4 5 6)) ; ==> '(1 2 3 4 5 6)
+(concatenate 'string "abc" '(#\d #\e #\f)) ; ==> "abcdef"
+
+;; Difference between sort and stable-sort
+;; stable-sort wont reorder equivalent elements whereas sort may do so
+(sort #("foo" "bar" "baz") #'string<) ; ==> #("bar" "baz" "foo")
+(stable-sort #("foo" "bar" "baz") #'string<) ; ==> #("bar" "baz" "foo")
+
+;; sort and stable-sort are examples of what are called destructive functions
+;; Destructive functions are allowed--typeically for reasons of efficiency--
+;; to modify their arguments in more or less arbitrary ways. This has two
+;; implications: one, you should always do something with the return value
+;; of these functions (such as assign it to a variable or pass it to another
+;; function), and, two, unless you're done with the object you're passing
+;; to the destructive function, you should pass a copy instead.
+
+(defmacro sortf (sequence predicate)
+  `(setf ,sequence (sort ,sequence ,predicate)))
+
+;; The merge function takes two sequences and a predicate and returns
+;; a sequence produced by merging the two sequences, according to the
+;; predicate.
+;; MERGE takes a :key argument. Like concatenate, and for the same reason,
+;; the first argument to merge must be a type descriptor specifying the
+;; type of sequence to produce.
+
+(merge 'vector #(1 3 5) #(2 4 6) #'<)
+(merge 'vector '(1 3 5) #(2 4 6) #'<)
+(merge 'list #(1 3 5) #(2 4 6) #'<)
+(merge 'list '(1 3 5) #(2 4 6) #'<)
+
+;; SUBSEQ extracts a subsequence starting at a particular index and
+;; continuing to a particular ending index or the end of the sequence
+;; [start,end)
+
+(subseq "foobarbaz" 3) ; ==> "barbaz"
+(subseq "foobarbaz" 3 6) ; ==> "bar"
+
+(defparameter *xyz* (copy-seq "foobarbaz"))
+
+(setf (subseq *xyz* 3 6) "xxx") ; *xyz* ==> "fooxxxbaz"
+(setf (subseq *xyz* 3 6) "abcd") ; *xyz* ==> "fooabcbaz"
+(setf (subseq *xyz* 3 6) "xx") ; *xyz* ==> "fooxxcbaz"
+(setf (subseq *xyz* (position #\b *xyz*)) "lol") ; *xyz* ==> "foololbaz"
+(setf (subseq *xyz* (search "bar" *xyz*)) "lol") ; *xyz* ==> "foololbaz"
+
+(position #\b "foobarbaz") ; ==> 3
+(search "bar" "foobarbaz") ; ==> 3
+
+(mismatch "foobarbaz" "foom")
