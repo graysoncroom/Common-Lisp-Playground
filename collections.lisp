@@ -194,4 +194,8 @@ does NOT return true.
 (position #\b "foobarbaz") ; ==> 3
 (search "bar" "foobarbaz") ; ==> 3
 
-(mismatch "foobarbaz" "foom")
+(mismatch "foobarbaz" "foom") ; ==> 3
+
+(fill "foobarbaz" #\x :start 3 :end 6) ; ==> "fooxxxbaz"
+
+;;; Sequence Predicates
