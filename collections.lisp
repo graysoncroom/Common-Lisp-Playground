@@ -164,6 +164,10 @@ does NOT return true.
 (defmacro sortf (sequence predicate)
   `(setf ,sequence (sort ,sequence ,predicate)))
 
+(let ((my-array #(3 2 1 5 8 -5)))
+  (sortf my-array #'<)
+  (print my-array))
+
 ;; The merge function takes two sequences and a predicate and returns
 ;; a sequence produced by merging the two sequences, according to the
 ;; predicate.
@@ -199,3 +203,14 @@ does NOT return true.
 (fill "foobarbaz" #\x :start 3 :end 6) ; ==> "fooxxxbaz"
 
 ;;; Sequence Predicates
+(every #'evenp #(1 2 3 4 5)) ; ==> nil
+(some #'evenp #(1 2 3 4 5)) ; ==> t
+(notany #'evenp #(1 2 3 4 5)) ; ==> nil
+(notevery #'evenp #(1 2 3 4 5)) ; ==> t
+
+(every #'> #(1 2 3 4) #(5 4 3 2)) ; ==> nil
+(some #'> #(1 2 3 4) #(5 4 3 2)) ; ==> t
+(notany #'> #(1 2 3 4) #(5 4 3 2)) ; ==> nil
+(notevery #'> #(1 2 3 4) #(5 4 3 2)) ; ==> t
+
+;;; Sequence Mapping Functions
