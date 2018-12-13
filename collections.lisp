@@ -214,3 +214,64 @@ does NOT return true.
 (notevery #'> #(1 2 3 4) #(5 4 3 2)) ; ==> t
 
 ;;; Sequence Mapping Functions
+(map 'vector #'* #(1 2 3 4 5) #(10 9 8 7 6)) ; ==> #(10 18 24 28 30)
+
+;; Reduce also takes a full complement of keyword arguments
+;; :key, :from-end, :start, :end
+;; One argument unique to REDUCE is the :initial-value keyword
+;; The :initial-value keyword specifies a value that's logically placed
+;; before the first element of the sequence (or after the last if you also
+;; specify a true :from-end argument).
+(reduce #'+ #(1 2 3 4 5 6 7 8 9 10)) ; ==> 55
+
+;;; Hash Tables
+;; With no arguments MAKE-HASH-TABLE makes a hash table that considers
+;; two keys equivalent if they're the same object according to EQL. This
+;; is a good default unless you want to use strings as keys, since two
+;; strings with the same contents aren't necessarily EQL. In that case
+;; you'll want a so-called EQUAL hash table, which you can get by passing
+;; the symbol EQUAL as the :test keyword argument to MAKE-HASH-TABLE. Two
+;; other possible values for the :test argument are the symbols EQ and
+;; EQUALP. These are, of course, the names of the standard object comparsion
+;; functions, which I discussed in Chapter 4. However, unlike the :test
+;; argument passed to the sequence functions, MAKE-HASH-TABLE's :test
+;; can't be used to specify and arbitrary function--only the values EQ, EQL,
+;; EQUAL, and EQUALP. This is because hash tables actually need two
+;; functions, an equivalence function and a hash function that computes a
+;; numerical hash code from the key in a way compatible with how the
+;; equivalence function will ultimately compare two keys. However, although
+;; the language standard provides only for hash tables that use the standard
+;; equivalence functions, most implementations provide some mechanism for
+;; defining custom hash tables.
+
+;; The GETHASH function provides access to the elements of a hash table.
+;; It takes two arguments--a key and the hashtable--and returns the value,
+;; if any, stored in the hash table under that key or NIL.
+(defparameter *h* (make-hash-table))
+
+(gethash 'foo *h*) ; ==> nil, nil
+(setf (gethash 'foo *h*) 'quux) ; ==> 'quux)
+(gethash 'foo *h*) ; ==> 'quux, t
+
+(setf (gethash 'bar *h*) nil) ; ==> nil
+(gethash 'bar *h*) ; ==> nil, t
+
+(defun show-value (key hash-table)
+  (multiple-value-bind (value present) (gethash key hash-table)
+    (if present
+	(format nil "Value ~a actually present." value)
+	(format nil "Value ~a because key not found." value))))
+
+(show-value 'foo *h*) ; ==> "Value QUUX actually present."
+(show-value 'bar *h*) ; ==> "Value NIL actually present."
+(show-value 'baz *h*) ; ==> "Value NIL because key not found."
+
+;; REMHASH takes the same arguments as GETHASH and removes the specified
+;; entry. You can also completely clear a hash table of all it's
+;; key/value paris with CLRHASH.
+
+;;; Hash Table Iteration
+(maphash #'(lambda (k v) (format t "~a => ~a~%" k v)) *h*)
+
+(loop for k being the hash-keys in *h* using (hash-value v)
+      do (format t "~a => ~a~%" k v))
