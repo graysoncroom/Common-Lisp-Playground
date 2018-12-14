@@ -75,3 +75,31 @@ NULL - Predicate to test whether an object is NIL. Functionally equivalent
        to NOT but stylistically preferable when testing for an empty list as
        opposed to boolean false
 |#
+
+(map 'list #'+ '(1 2 3) '(4 5 6)) ; ==> (5 7 9)
+
+(mapcar #'(lambda (x) (* 2 x)) '(1 2 3)) ; ==> (2 4 6)
+(mapcar #'+ '(1 2 3) '(10 20 30)) ; ==> (11 22 33)
+
+(maplist #'print '(1 2 3 4 5 6))
+(maplist #'(lambda (lst) (print (reduce #'+ lst))) '(1 2 3 4 5 6))
+
+;; MAPCAR <--> MAPCAN <--> MAPC
+;; MAPLIST <--> MAPCON <--> MAPL
+
+#| MAPCAN and MAPCON work like MAPCAR and MAPLIST except for the way they build up their
+result. While MAPCAR and MAPLIST build up a completely new list to hold the results of the
+function calls, MAPCAN and MAPCON build their result by splicing together the results--which
+must be lists--as if by NCONC. Thus, each function invocation can provide any number of 
+elements to be included in the result. MAPCAN, like MAPCAR, passes the elements of the list
+to the mapped functionwhile MAPCON, like MAPLIST, passes the cons cells.
+|#
+
+;; MAPC and MAPL are control constructs disguised as functions--they simply return their
+;; first list argument, so they're useful only when the side effects of the mapped
+;; function do something interesting. MAPC is the cousin of MAPCAR and MAPCAN while
+;; MAPL is the MAPLIST/MAPCON family.
+
+(mapc #'+ '(1 2 3)) ; ==> (1 2 3)
+(mapc #'print '(1 2 3))
+(mapl #'print '(1 2 3))
