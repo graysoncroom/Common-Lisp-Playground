@@ -53,7 +53,7 @@ LAST - Returns the last cons cell in a list. With an integer,
        argument returns the last n cons cells.
 BUTLAST - Returns a copy of the list, excluding the last cons cell. With an
           integer argument, excludes the last n cells.
-NBUTLASt - The recycling version of BUTLAST; may modify and return the
+NBUTLAST - The recycling version of BUTLAST; may modify and return the
            argument list but has no reliable side effects.
 LDIFF - Returns a copy of a list up to given cons cell.
 TAILP - Returns true in a given object is a cons cell that's part
