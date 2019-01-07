@@ -1,0 +1,82 @@
+(defparameter *filename* "data-sets/pr91-crowd-control.dat")
+
+(defun file-get-list-matrices (filename)
+  (with-open-file (input-stream filename :if-does-not-exist nil)
+    (when input-stream
+      (read input-stream nil) ; Ignore # of cases
+      (let ((matrices nil))
+	(do ((line (read-line input-stream nil)
+		   (read-line input-stream nil))
+	     (nums nil))
+	    (nil)
+	  (if (string= "" (string-trim " " line))
+	      (progn (push (nreverse nums) matrices)
+		     (setf nums nil))
+	      (if (null line)
+		  (progn (push (nreverse nums) matrices)
+			 (setf nums nil)
+			 (return))
+		    (push (line->nums line) nums))))
+	(nreverse matrices)))))
+
+(defun line->nums (line)
+  (let ((nums nil))
+    (dotimes (i (length line))
+      (push (parse-integer line :start i :end (1+ i)) nums))
+    (nreverse nums)))
+
+(defun list-matrix->array-matrix (list-matrix)
+  (make-array (list (length list-matrix)
+		    (length (car list-matrix)))
+	      :initial-contents list-matrix))
+
+(defun array-matrix->list-matrix (array-matrix)
+  (loop for i below (array-dimension array-matrix 0)
+	collect (loop for j below (array-dimension array-matrix 1)
+		      collect (aref array-matrix i j))))
+
+(defun array-matrix->list-matrix* (array-matrix)
+  (do ((i 0 (1+ i))
+       (rows nil))
+      ((>= i (array-dimension array-matrix 0)) (nreverse rows))
+    (push (do ((j 0 (1+ j))
+	       (cols nil))
+	      ((>= j (array-dimension array-matrix 1)) (nreverse cols))
+	    (push (aref array-matrix i j) cols))
+	  rows)))
+
+(defun ok? (array-matrix)
+  (dotimes (i (array-dimension array-matrix 0))
+    (dotimes (j (array-dimension array-matrix 1))
+      (when (>= (total-in-proximity array-matrix i j) 3)
+	(return-from ok? nil))))
+  t)
+
+;; this is fucking up
+;; fix this logic and your program will work fine
+(defun total-in-proximity (array-matrix i j &optional already-passed)
+  (let ((rows (array-dimension array-matrix 0))
+	(cols (array-dimension array-matrix 1))
+	(already-been-here? (find-if (lambda (ij)
+				      (and (= i (car ij))
+					   (= j (cdr ij))))
+				    already-passed))
+	(new-passed (cons (cons i j) already-passed))
+	(elm (aref array-matrix i j)))
+    ;;(print already-passed)
+    (if (or already-been-here? (= elm 0))
+	0
+	(+ 1
+	   (if (<= i 0)         0 (total-in-proximity array-matrix (1- i) j new-passed))
+	   (if (>= i (1- rows)) 0 (total-in-proximity array-matrix (1+ i) j new-passed))
+	   (if (<= j 0)         0 (total-in-proximity array-matrix i (1- j) new-passed))
+	   (if (>= j (1- cols)) 0 (total-in-proximity array-matrix i (1+ j) new-passed))))))
+  
+(defun pr91-crowd-control-main ()
+  (dolist (list-matrix (file-get-list-matrices *filename*))
+    (format t "~:[NOT OK~;OK~]~%" (ok? (list-matrix->array-matrix list-matrix)))))
+
+(defun pr91-crowd-control-main* ()
+  (format t "~{~:[NOT OK~;OK~]~%~}" (mapcar (lambda (list-matrix)
+					      (ok? (list-matrix->array-matrix list-matrix)))
+					    (file-get-list-matrices *filename*))))

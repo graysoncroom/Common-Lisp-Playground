@@ -1,0 +1,67 @@
+(defparameter *filename* "data-sets/pr91-diagonal-word-matrix.dat")
+
+(defun file-get-words (filename)
+  (with-open-file (input-stream filename :if-does-not-exist nil)
+    (when input-stream
+      (read input-stream nil)
+      (loop for word = (read-line input-stream nil)
+	    while word
+	    collect word))))
+
+(defun file-get-words* (filename)
+  (with-open-file (input-stream filename :if-does-not-exist nil)
+    (when input-stream
+      (read input-stream nil)
+      (do ((word (read-line input-stream nil)
+		 (read-line input-stream nil))
+	   (words nil))
+	  ((null word) (nreverse words))
+	(push word words)))))
+
+(defun get-box-size (word)
+  (ceiling (sqrt (length word))))
+
+(defun get-diagonal-word-matrix (word)
+    (let* ((box-size (get-box-size word))
+	   (word-as-list (coerce word 'list))
+	   (matrix (make-array `(,box-size ,box-size) :initial-element #\*)))
+      (do ((x (1- box-size) (1- x)))
+	  ((< x (- (1- box-size))))
+	(do ((i 0 (1+ i))
+	     (j x (1+ j)))
+	    ((or (>= j box-size)
+		 (>= i box-size)))
+	  (when (and (>= j 0)
+		     (>= i 0))
+	    (let ((letter (pop word-as-list)))
+	      (when letter
+		(setf (aref matrix i j) letter))))))
+      matrix))
+
+(defun pr91-diagonal-word-matrix-main ()
+  (dolist (word (file-get-words *filename*))
+    (let* ((matrix (get-diagonal-word-matrix word))
+	   (rows (array-dimension matrix 0))
+	   (columns (array-dimension matrix 1)))
+      (dotimes (i rows)
+	(dotimes (j columns)
+	  (princ (aref matrix i j)))
+	(terpri)))
+    (terpri)))
+	  
+(defun pr91-diagonal-word-matrix-main* ()
+  (dolist (word (file-get-words *filename*))
+    (let ((matrix (get-diagonal-word-matrix word)))
+      (dotimes (i (array-dimension matrix 0))
+	(dotimes (j (array-dimension matrix 1))
+	  (princ (aref matrix i j)))
+	(terpri)))
+    (terpri)))
+
+(defun pr91-diagonal-word-matrix-main** ()
+  (dolist (word (file-get-words *filename*))
+    (let ((matrix (get-diagonal-word-matrix word)))
+      (format t "~{~{~A~}~%~}~%"
+	      (loop for i below (array-dimension matrix 0)
+		    collect (loop for j below (array-dimension matrix 1)
+				  collect (aref matrix i j)))))))
