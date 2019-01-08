@@ -264,6 +264,73 @@ will continue to be interned directly in the COM.GIGAMONKEYS.EMAIL-DB package.
 |#
 
 #| Importing Individual Names
+Now suppose you find a third-party library of functions for manipulating e-mail messages.
+The names used in the library's API are exported from the package COM.ACME.EMAIL, so you could
+:use that package to get easy access to those names. But suppose you need to use only one
+function from this library, and other exported symbols conflict with names you already use
+(or plan to use) in our own code. (if you try to :use a package that conflicts with a symbol
+already defined the REPL will signal an error). In this case, you can import the one symbol
+you need with an :import-from clause in the DEFPACKAGE. For instance, if the name of the function
+you want to use is parse-email-address, you can change the DEFPACKAGE to this:
+|#
+(defpackage :com.gigamonkeys.email-db
+  (:use #:common-lisp #:com.gigamonkeys.text-db)
+  (:import-from #:com.acme.email
+		#:parse-email-address))
+#| Now anywhere the name parse-email-address appears in code read in the
+COM.GIGAMONKEYS.EMAIL-DB package (current package), it will be read as the symbol from
+COM.ACME.EMAIL. IF you need to import more than one symbol from a single package,
+you can include multiple names after the package name in a single :import-from clause.
+A DEFPACKAGE can also include multiple :import-from clauses in order to import symbols from
+different packages.
+
+Occasionally you'll run into the opposite situation -- a package may export a bunch of names you
+want to use and a few you don't. Rather than listing all the symbols you do want to use in an
+:import-from clause, you can instead :use the package and then list the names you don't want
+to inherit in a :shadow clause. For instance, suppose the COM.ACME.TEXT package exports a
+bunch of names of functions and classes used in text processing. Further suppose that most of
+these functions and classes are ones you'll want to use in your code, but one of the names,
+build-index, conflicts with a name you've already used. You can make the build-index from
+COM.ACME.TEXT inaccessible by shadowing it.
+|#
+(defpackage :com.gigamonkeys.email-db
+  (:use #:common-lisp
+	#:com.gigamonkeys.text-db
+	#:com.acme.text)
+  (:import-from #:com-acme.email
+		#:parse-email-address)
+  (:shadow :build-index))
+#| The :shadow clause causes a new symbol named BUILD-INDEX to be created and added directly
+to COM.GIGAMONKEYS.EMAIL-DB's name-to-symbol map. Now if the reader reads the name BUILD-INDEX,
+it will translate it to the symbol in COM.GIGAMONKEYS.EMAIL-DB's map, rather than the one that
+would otherwise be inherited from COM.ACME.TEXT. The new symbol is also added to a shadowing
+symbols list that's part of the COM.GIGAMONKEYS.EMAIL-DB package, so if you later use another
+package that also exports a BUILD-INDEX symbol, the package system will know there's no
+conflict -- that you want the symbol from COM.GIGAMONKEYS.EMAIL-DB to be used rather than any
+other symbols with the same name inherited from other packages.
+
+A similar situation can arise if you want to use two packages that export the same name. In this
+case the reader won't know which inherited name to use when it reads the textual name. In such
+situtations you must resolve the ambiguity by shadowing the conflicting names. If you don't need
+to use the name from either package, you could shadow the name with a :shadow clause,
+creating a new symbol with the same name in your package. But if you actually want to use one of
+the inherited symbols, then you need to resolve the ambiguity with a :shadowing-import-from
+clause. Like an :import-from clause, a :shadowing-import-from clause consists of a package name
+followed by the names to import from that package. For instance, if COM.ACME.TEXT exports a name
+SAVE that conflicts with the name exported from COM.GIGAMONKEYS.TEXT-DB, you could resolve the
+ambiguity with the following DEFPACKAGE:
+|#
+(defpackage :com.gigamonkeys.email-db
+  (:use #:common-lisp
+	#:com.gigamonkeys.text-db
+	#:com.acme.text)
+  (:import-from #:com.acme.email
+		#:parse-email-address)
+  (:shadow #:build-index)
+  (:shadowing-import-from #:com.gigamonkeys.text-db
+			  #:save))
+
+#| Packaging Mechanics
 
 
 |#
