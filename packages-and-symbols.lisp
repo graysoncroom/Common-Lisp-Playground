@@ -331,6 +331,116 @@ ambiguity with the following DEFPACKAGE:
 			  #:save))
 
 #| Packaging Mechanics
+That covers the basics of how to use packages to manage namespaces in serveral common situations.
+However, another level of how to use packages is wroth discussing -- the raw mechanics of how to
+organize code that uses different packages. In this section I'll discuss a few rules of thumb
+about how to organize code -- where to put your DEFPACKAGE forms relative to the code that uses
+your packages via IN-PACKAGE.
 
+Because packages are used by the reader, a package must be defined before you can LOAD or
+COMPILE-FILE a file that contains an IN-PACKAGE expression switching to that package.
+Packages also must be defined before other DEFPACKAGE forms can refer to them. For instance,
+if you're going to :use COM.GIGAMONKEYS.TEXT-DB in COM.GIGAMONKEYS.EMAIL-DB, then
+COM.GIGAMONKEYS.TEXT-DB's DEFPACKAGE must be evaluated before the DEFPACKAGE of
+COM.GIGAMONKEYS.TEXT-DB's.
 
+The best first step toward making sure packages exist when the need to is to put all your
+DEFPACKAGEs in files separate from the code that needs to be read in those packages. Some
+folks like to create a foo-package.lisp file for each individual package, and others create a
+single packages.lisp that contains all the DEFPACKAGE forms for a group of related packages.
+Either approach is reasonable, though the one-file-per-package approach also requires that you
+arrange to load the individual file in the right order according to the interpackage
+dependencies.
+
+Either way, once all the DEFPACKAGE forms have been separated from the code that will be read in the
+packages they define, you can arrange to LOAD the files containing the DEFPACKAGEs before you compile
+or load any of the other files. For simple programs you can do this by hand: simply LOAD the file or
+files containing the DEFPACKAGE forms, possibly compiling them first with COMPILE-FILE. Note, however,
+that the packages don't exist until you LOAD the package definitions, either the source or the files
+produced by COMPILE-FILE. Thus, if you're compiling everything, you must still LOAD all the package
+definitions before you can COMPILE-FILE any files to be read in the packages.
+
+Doing these steps by hand will get tedious after a while. For simple programs you can automate
+the steps by writing a file, load.lisp, that contains the appropriate LOAD and COMPILE-FILE
+calls in the right order. Then you can just LOAD that file. For more complex programs you'll
+want to use a system definition facility to manage loading and compiling files in the right order.
+
+The other key rule of thumb is that each file should contain exactly one
+IN-PACKAGE form, and it should be the first form in the file other than comments. Files containing
+DEFPACKAGE forms should start with (in-package :cl-user), and all other files should
+contain an in-package of one of your packages.
+
+If you violate this rule and switch packages in the middle of a file, you'll confuse human readers
+who don't notice the second IN-PACKAGE. Also, many Lisp development environments,
+particularly Emacs-based ones such as SLIME, look for an IN-PACKAGE to determine the package
+they should use when communicating with Common Lisp. Multiple IN-PACKAGE forms per file may confuse
+these tools as well.
+
+On the other hand, it's fine to have multiple files read in the same package, each with an identical
+IN-PACKAGE form. It's just a matter of how you like to organize your code.
+
+The other bit of packaging mechanics has to do with how to name package. Package names live in a
+flat namespace -- package names are just strings, and different packages must have textually
+distinct names. Thus, you have to consider the possibility of conflicts between package names. If
+you're using only packages you developed yourself, then you can probably get away with using short
+names for your packages. But if you're planning to use third-party libraries or to publicf your
+code for use by other programmers, then you need to floow a naming convention that will minimize
+the possibility of name collisions between different packages. Many Lispers these days are adopting
+Java-style names, like the ones used in this chapter, consisting of a reversed Internet domain name
+followed by a dot and a descriptive string.
+|#
+
+#| Package Gotchas
+Once you're familiar with packages, you won't spend a bunch of time thinking about them.
+There's just not that much to them. However, a couple of gotchas that bite most new Lisp programmers
+make the package system seem more complicated and unfriendly than it really is.
+
+The number-one gotcha arises most commonly when playing around at the REPL. You'll be looking
+at some library that defines certain interesting functions. You'll try to call one of the functions
+like this:
+        (foo)
+and get dropped into the debugger with the following error:
+        attempt to call `FOO' which is an undefined function.
+           [Condition of type UNDEFINED-FUNCTION]
+Ah, of course -- you forgot to use the library's package. So you quit the debugger and try to
+USE-PACKAGE the library's package in order to get access to the name FOO so you can call the
+function.
+        (use-package :foolib)
+But that drops you back into the debugger with this error message:
+        Using package `FOOLIB' results in name conflicts for these symbols: FOO
+           [Condition of type PACKAGE-ERROR]
+Huh? The problem is the first time you called foo, the reader read the name foo and interned it
+in CL-USER before the evaluator got hold of it and discovered that this newly interned symbol
+isn't the name of a function. This new symbol then conflicts with the symbol of the same name
+exported from the FOOLIB package. If you had remembered to USE-PACKAGE FOOLIB before you tried
+to call foo, the reader would have read foo as the inherited symbol and not interned a foo
+symbol in CL-USER
+
+However, all isn't lost, because the first restart offered by the debugger will patch things up in
+just the right way: it will unintern the foo symbol from COMMON-LISP-USER, putting the CL-USER
+package back to the state it was in before you called foo, allowing the USE-PACKAGE to proceed
+and allowing for the inherited foo to be available in CL-USER.
+
+This kind of problem can also occur when loading and compiling files. For instance, if you defined
+a package, MY-APP, for code that was going to use functions with names from the FOOLIB package,
+but forgot to :use FOOLIB, when you compile the files with an (in-package :my-app) in them, the
+reader will intern new symbols in MY-APP for the names that were supposed to be read as symbols
+from FOOLIB. When you try to run the compiled code, you'll get undefined function errors. If you
+then try to redefine the MY-APP package to :use FOOLIB, you'll get the conflicting symbols error.
+The solution is the same: select the restart to unintern the conflicting symbols from MY-APP.
+You'll then need to recompile the code in the MY-APP package so it will refer to the inherited names.
+
+The last package-related gotcha is, by comparison, quite trivial, but it bites most Lisp programmers
+at least a few times: you define a package that uses COMMON-LISP and maybe a few libraries. Then at
+the REPL you change to that package to play around. Then you decide to quit Lisp altogether and
+try to call (quit). However, quit isn't a name from the COMMON-LISP package -- it's defined by
+the implementation in some implementation-specific package that happens to be used by
+COMMON-LISP-USER. The solution is simple -- change packages back to CL-USER to quit. Or use the 
+SLIME REPL shorcut quit, which will also save you from having to remember that in certain
+Common Lisp implementations the function to quit is exit, not quit.
+
+You're almost done with your tour of Common Lisp. In the next chapter I'll discuss the details of
+the extended LOOP macro. After that, the rest of the book is devoted to "practicals": a spam
+filter, a library for parsing binary files, and various parts of a streaming MP3 server with a
+Web interface.
 |#
