@@ -5,8 +5,8 @@
     (when input-stream
       (read input-stream nil)
       (loop for num = (read input-stream nil)
-	    while num
-	    collect num))))
+            while num
+            collect num))))
 
 (defun pr51-print-lines-main ()
   (dolist (num (file-get-nums *filename*))

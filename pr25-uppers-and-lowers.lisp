@@ -5,11 +5,11 @@
     (when input-stream
       (read input-stream nil)
       (loop for line = (read-line input-stream nil)
-	    while line
-	    collect line))))
+            while line
+            collect line))))
 
 (defun pr25-uppers-and-lowers-main ()
   (dolist (word (file-get-words *filename*))
     (format t "~a~%" (if (evenp (length word))
-			 (string-upcase word)
-			 (string-downcase word)))))
+                         (string-upcase word)
+                         (string-downcase word)))))

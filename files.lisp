@@ -11,22 +11,22 @@
 (let ((input-stream (open "data-sets/pr92-monster-maze.dat" :if-does-not-exist nil)))
   (when input-stream
     (loop for line = (read-line input-stream nil)
-	  while line
-	  do (format t "~a~%" line))
+          while line
+          do (format t "~a~%" line))
     (close input-stream)))
 
 (let ((input-stream (open "data-sets/pr92-monster-maze.dat"
-			  :if-does-not-exist nil
-			  :element-type '(unsigned-byte 8))))
+                          :if-does-not-exist nil
+                          :element-type '(unsigned-byte 8))))
   (when input-stream
     (loop for byte = (read-byte input-stream nil)
-	  while byte
-	  do (format t "~a~%" byte))
+          while byte
+          do (format t "~a~%" byte))
     (close input-stream)))
 
 (let ((input-stream (open "data-sets/pr92-monster-maze.dat"))
       (sequence (make-array 100 :initial-element nil
-				:adjustable t)))
+                                :adjustable t)))
   (when input-stream
     (read-sequence sequence input-stream))
   sequence)
@@ -34,8 +34,8 @@
 (with-open-file (input-stream "data-sets/pr92-monster-maze.dat" :if-does-not-exist nil)
   (when input-stream
     (loop for line = (read-line input-stream nil)
-	  while line
-	  do (format t "~a~%" line))))
+          while line
+          do (format t "~a~%" line))))
 
 (pathname-directory (pathname "/foo/bar/baz.txt")) ; ==> (:ABSOLUTE "foo" "bar")
 (pathname "/foo/bar/baz.txt") ; ==> #P"/foo/bar/baz.txt"
@@ -63,6 +63,6 @@
  :type "txt") ; ==> #p"/foo/bar/baz.txt"
 
 (make-pathname :device "c"
-	       :directory '(:relative "data-sets")
-	       :name "pr92-monster-maze"
-	       :type "dat")
+               :directory '(:relative "data-sets")
+               :name "pr92-monster-maze"
+               :type "dat")

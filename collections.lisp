@@ -120,7 +120,7 @@ does NOT return true.
 (count-if-not #'evenp #(1 2 3 4 5)) ; ==> 3
 (position-if #'digit-char-p "abcd0001") ; ==> 4
 (remove-if-not #'(lambda (x) (char= (elt x 0) #\f))
-	       #("foo" "bar" "baz" "foom")) ; ==> #("foo" "foom")
+               #("foo" "bar" "baz" "foom")) ; ==> #("foo" "foom")
 
 ;; REMOVE-IF-NOT returns the elements that satisfy the predicate
 
@@ -259,8 +259,8 @@ does NOT return true.
 (defun show-value (key hash-table)
   (multiple-value-bind (value present) (gethash key hash-table)
     (if present
-	(format nil "Value ~a actually present." value)
-	(format nil "Value ~a because key not found." value))))
+        (format nil "Value ~a actually present." value)
+        (format nil "Value ~a because key not found." value))))
 
 (show-value 'foo *h*) ; ==> "Value QUUX actually present."
 (show-value 'bar *h*) ; ==> "Value NIL actually present."

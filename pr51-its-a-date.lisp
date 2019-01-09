@@ -5,17 +5,17 @@
     (when input-stream
       (read input-stream nil)
       (loop for month = (read input-stream nil)
-	    for day = (read input-stream nil)
-	    for year = (read input-stream nil)
-	    while (and month day year)
-	    collect (list month day year)))))
+            for day = (read input-stream nil)
+            for year = (read input-stream nil)
+            while (and month day year)
+            collect (list month day year)))))
 
 (defun pr51-its-a-date-main ()
   (dolist (date (file-get-dates *filename*))
     (format t "~@:(~a~) ~a, ~a~%"
-	    (num->month (car date))
-	    (cadr date)
-	    (caddr date))))
+            (num->month (car date))
+            (cadr date)
+            (caddr date))))
 
 (defun num->month (num)
   (case num

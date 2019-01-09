@@ -5,8 +5,8 @@
     (when input-stream
       (read input-stream nil)
       (loop for line = (read-line input-stream nil)
-	    while line
-	    collect (line->pair line)))))
+            while line
+            collect (line->pair line)))))
 
 (defun line->pair (line)
   (with-input-from-string (s line)
@@ -16,6 +16,6 @@
   (dolist (pair (file-get-pairs *filename*))
     (destructuring-bind (start . end) pair
       (format t "~a~%" (loop for i from start to end
-			     counting (oddp i))))))
-	   
+                             counting (oddp i))))))
+           
 

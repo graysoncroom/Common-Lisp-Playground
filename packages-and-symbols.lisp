@@ -247,8 +247,8 @@ to make them available to other packages.
 (defpackage :com-gigamonkeys.text-db
   (:use #:common-lisp)
   (:export #:open-db
-	   #:save
-	   #:store))
+           #:save
+           #:store))
 #| Again, you use the COMMON-LISP package, because you'll need access to standard functions
 within COM.GIGAMONKEYS.TEXT-DB. The :export clause specifies names that will be external in
 COM.GIGAMONKEYS.TEXT-DB and thus accessible in packages that :use it.
@@ -257,7 +257,7 @@ application package to the following:
 |#
 (defpackage :com.gigamonkeys.email-db
   (:use #:common-lisp
-	#:com.gigamonkeys.text-db))
+        #:com.gigamonkeys.text-db))
 #| Now code written in COM.GIGAMONKEYS.EMAIL-DB can use unqualified names to refer to
 the exported symbols from both COMMON-LISP and COM.GIGAMONKEYS.TEXT-DB. All other names
 will continue to be interned directly in the COM.GIGAMONKEYS.EMAIL-DB package.
@@ -276,7 +276,7 @@ you want to use is parse-email-address, you can change the DEFPACKAGE to this:
 (defpackage :com.gigamonkeys.email-db
   (:use #:common-lisp #:com.gigamonkeys.text-db)
   (:import-from #:com.acme.email
-		#:parse-email-address))
+                #:parse-email-address))
 #| Now anywhere the name parse-email-address appears in code read in the
 COM.GIGAMONKEYS.EMAIL-DB package (current package), it will be read as the symbol from
 COM.ACME.EMAIL. IF you need to import more than one symbol from a single package,
@@ -295,10 +295,10 @@ COM.ACME.TEXT inaccessible by shadowing it.
 |#
 (defpackage :com.gigamonkeys.email-db
   (:use #:common-lisp
-	#:com.gigamonkeys.text-db
-	#:com.acme.text)
+        #:com.gigamonkeys.text-db
+        #:com.acme.text)
   (:import-from #:com-acme.email
-		#:parse-email-address)
+                #:parse-email-address)
   (:shadow :build-index))
 #| The :shadow clause causes a new symbol named BUILD-INDEX to be created and added directly
 to COM.GIGAMONKEYS.EMAIL-DB's name-to-symbol map. Now if the reader reads the name BUILD-INDEX,
@@ -322,13 +322,13 @@ ambiguity with the following DEFPACKAGE:
 |#
 (defpackage :com.gigamonkeys.email-db
   (:use #:common-lisp
-	#:com.gigamonkeys.text-db
-	#:com.acme.text)
+        #:com.gigamonkeys.text-db
+        #:com.acme.text)
   (:import-from #:com.acme.email
-		#:parse-email-address)
+                #:parse-email-address)
   (:shadow #:build-index)
   (:shadowing-import-from #:com.gigamonkeys.text-db
-			  #:save))
+                          #:save))
 
 #| Packaging Mechanics
 That covers the basics of how to use packages to manage namespaces in serveral common situations.

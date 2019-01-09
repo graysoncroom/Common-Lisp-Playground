@@ -5,15 +5,15 @@
     (when input-stream
       (read input-stream nil)
       (loop for first = (read input-stream nil)
-	    for second = (read input-stream nil)
-	    while (and first second)
-	    collect (cons (string first)
-			  (string second))))))
+            for second = (read input-stream nil)
+            while (and first second)
+            collect (cons (string first)
+                          (string second))))))
 
 (defun pr26-which-comes-first-main ()
   (dolist (pair (file-get-pairs *filename*))
     (let ((first (car pair))
-	  (second (cdr pair)))
+          (second (cdr pair)))
       (format t "~(~a~)~%" (if (string<= first second)
-			       first
-			       second)))))
+                               first
+                               second)))))

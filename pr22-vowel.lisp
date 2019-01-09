@@ -5,8 +5,8 @@
     (when input-stream
       (read-line input-stream nil)
       (loop for line = (read-line input-stream nil)
-	    while line
-	    collect line))))
+            while line
+            collect line))))
 
 (defun vowelp (letter)
   (find letter "aeiou" :test #'char=))
@@ -16,10 +16,10 @@
 
 (defun pr22-vowel-main ()
   (format t "~{~:[No Vowel~;Vowel~]~%~}"
-	  (mapcar #'last-letter-vowel-p
-		  (file-get-lines *filename*))))
+          (mapcar #'last-letter-vowel-p
+                  (file-get-lines *filename*))))
 
 (defun pr22-vowel-main* ()
   (loop for word in (file-get-lines *filename*)
-	while word
-	do (format t "~:[No Vowel~;Vowel~]~% (last-letter-vowel-p word))))
+        while word
+        do (format t "~:[No Vowel~;Vowel~]~% (last-letter-vowel-p word))))

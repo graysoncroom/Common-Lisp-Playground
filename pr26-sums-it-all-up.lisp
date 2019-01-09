@@ -5,15 +5,15 @@
     (when input-stream
       (read input-stream nil)
       (loop for line = (read-line input-stream nil)
-	    while line
-	    collect line))))
+            while line
+            collect line))))
 
 (defun get-pair-sums (pairs)
   (do ((sums nil))
       ((null pairs) (nreverse sums))
     (push (+ (pop pairs)
-	     (pop pairs))
-	  sums)))
+             (pop pairs))
+          sums)))
 
 (defun pr26-sums-it-all-up-main ()
   (dolist (line (file-get-lines *filename*))

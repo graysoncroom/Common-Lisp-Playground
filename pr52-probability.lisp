@@ -5,9 +5,9 @@
     (when input-stream
       (read input-stream nil)
       (loop for total = (read input-stream nil)
-	    for heads = (read input-stream nil)
-	    while (and total heads)
-	    collect (/ heads total)))))
+            for heads = (read input-stream nil)
+            while (and total heads)
+            collect (/ heads total)))))
 
 (defun pr52-probability-main ()
   (format t "~{~,3f probability~%~}" (file-get-probabilities *filename*)))

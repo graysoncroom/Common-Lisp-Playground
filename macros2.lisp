@@ -13,10 +13,10 @@
 #| doesn't use destructuring
 (defmacro do-primes (var-and-range &body body)
   (let ((var (car var-and-range))
-	(start (cadr var-and-range))
-	(end (caddr var-and-range)))
+        (start (cadr var-and-range))
+        (end (caddr var-and-range)))
     `(do ((,var (next-prime ,start) (next-prime (1+ ,var))))
-	 ((> ,var ,end))
+         ((> ,var ,end))
        ,@body)))
 |#
 
@@ -32,7 +32,7 @@ example: (doprimes (i 0 (random 100)) (print i))
 #| still leaky
 (defmacro do-primes ((var start end) &body body)
   `(do ((,var (next-prime ,start) (next-prime (1+ ,var)))
-	(ending-value ,end))
+        (ending-value ,end))
        ((> ,var ending-value))
      ,@body))
 
@@ -43,8 +43,8 @@ example: (doprimes (ending-value 0 10) (print ending-value))
 (defmacro do-primes ((var start end) &body body)
   (let ((ending-value-name (gensym)))
     `(do ((,var (next-prime ,start) (next-prime (1+ ,var)))
-	  (,ending-value-name ,end))
-	 ((> ,var ,ending-value-name))
+          (,ending-value-name ,end))
+         ((> ,var ,ending-value-name))
        ,@body)))
 |#
 
@@ -55,8 +55,8 @@ example: (doprimes (ending-value 0 10) (print ending-value))
 (defmacro do-primes ((var start end) &body body)
   (with-gensyms (ending-value-name)
     `(do ((,var (next-prime ,start) (next-prime (1+ ,var)))
-	  (,ending-value-name ,end))
-	 ((> ,var ,ending-value-name))
+          (,ending-value-name ,end))
+         ((> ,var ,ending-value-name))
        ,@body)))
 
 (do-primes (i 1 100)

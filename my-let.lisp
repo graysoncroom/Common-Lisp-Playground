@@ -3,11 +3,11 @@
 
 (defun get-binding-symbols (bindings)
   (loop while bindings
-	collecting (car (pop bindings))))
+        collecting (car (pop bindings))))
 
 (defun get-binding-values (bindings)
   (loop while bindings
-	collecting (cadr (pop bindings))))
+        collecting (cadr (pop bindings))))
   
 (defmacro my-let (bindings &body body)
   `((lambda ,(get-binding-symbols bindings) ,@body) ,@(get-binding-values bindings)))
