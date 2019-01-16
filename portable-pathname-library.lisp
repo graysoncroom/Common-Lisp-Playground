@@ -209,3 +209,158 @@ Now you can take a first crack at the list-directory function. |#
   (when (wild-pathname-p dirname)
     (error "Can only list concrete directory names."))
   (directory (directory-wildcard dirname)))
+#| As it stands, this function would work in SBCL, CMUCL, and LispWorks. Unfortunately,
+a couple more implementation differences remain to be smoothed over. One is that not all
+implementations will return subdirectories of the given directory. Allegro, SBCL, CMUCL, and
+LispWorks do. OpenMCL doesn't by default but will if you pass directory a true value
+via the implementation-specific keyword argument :directories. CLISP's DIRECTORY returns
+subdirectories only when it's passed a wildcard pathname with :wild as the last element of
+the directory component and NIL name and type components. In this case, it returns
+only subdirectories, so you'll need to call DIRECTORY twice with different wildcards and
+combine the results.
+
+Once you get all the implementations returning directories, you'll discover they can also
+differ in whether they returns the names of directories in directory or file form. You
+want list-directory to always return directory names in directory form so you can
+differentiate subdirectories from regular files based on just the name. Except for Allegro,
+all the implementations this library will support do that. Allegro, on the other hand,
+requires you to pass DIRECTORY the implementation-specific keyword argument
+:directories-are-files NIL to get it to return directories in file form.
+
+Once you know how to make each implementation do what you want, actually writing
+list-directory is simply a matter of combining the different versions using
+read-time conditionals. |#
+(defun list-directory (dirname)
+  (when (wild-pathname-p dirname)
+    (error "Can only list concrete directory names."))
+  (let ((wildcard (directory-wildcard dirname)))
+    #+(or sbcl cmu lispworks)
+    (directory wildcard)
+
+    #+openmcl
+    (directory wildcard :directories t)
+
+    #+allegro
+    (directory wildcard :directories-are-files nil)
+
+    #+clisp
+    (nconc
+     (directory wildcard)
+     (directory (clisp-subdirectories-wildcard wildcard)))
+
+    #-(or sbcl cmu lispworks openmcl allegro clisp)
+    (error "list-directory not implemented")))
+#| The function clisp-subdirectories-wildcard isn't actually specific to CLISP, but since
+it isn't needed by the other implementation, you can guard its definition with a read-time
+conditional. In this case, since the expression following the #+ is the whole DEFUN, the whole
+function definition will be included or not, depending on whether clisp is present in
+*FEATURE*. |#
+#+clisp
+(defun clisp-subdirectories-wildcard (wildcard)
+  (make-pathname
+   :directory (append (pathname-directory wildcard)
+                      (list :wild))
+   :name nil
+   :type nil
+   :defaults wildcard))
+#| Testing a File's Existence
+To replace PROBE-FILE, you can define a function called file-exists-p. It should accept
+a pathname and return an equialent pathname if the file exists and NIL if it doesn't. It
+should be able to accept the name of a directory in either directory or file form but should
+always return a directory form pathname if the file exists and is a directory. This will allow
+you to use file-exists-p, along with directory-pathname-p, to test whether an arbitrary name
+is the name of a file or directory.
+
+In theory, file-exists-p is quite similar to the standard function PROBE-FILE; indeed,
+in several implementations -- SBCL, LispWorks, and OpenMCL -- PROBE-FILE already gives
+you the behavior you want for file-exists-p. But not all implementations of PROBE-FILE
+behave quite the same.
+
+Allegro and CMUCL's PROBE-FILE functions are close to what you need -- they will accept the
+name of a directory in either form but, instead of returning a directory form name, simply
+return the name in the same form as the argument it was passed. Luckily, if passed the name
+of a nondirectory in directory form, they return NIL. So with those implementations you can
+get the behavior you want by first passing the name to PROBE-FILE in directory form --
+if the file exists and is a directory, it will return the directory form name. If that
+call returns NIL, then you try again with a file form name.
+
+CLISP, on the other hand, once again has its own way of doing things. Its PROBE-FILE
+immediately signals an error if passed a name in directory form, regardless of whether
+a file or directory exists with that name. It also signals an error if passed a name in
+file form that's actually the name of a directory. For testing whether a directory
+exists, CLISP provides its own function: probe-directory (in the ext package). This is
+almost the mirror image of PROBE-FILE: it signals an error if passed a name in file form
+or if passed a name in directory form that happens to name a file. The only difference is it
+returns T rather than a pathname when the named directory exists.
+
+But even in CLISP you can implement the desired semantics by wrapping the calls
+to PROBE-FILE and probe-directory in IGNORE-ERRORS.
+
+(This is slightly borken in the sense that if PROBE-FILE signals an error for some other
+reason, this code will interpret it incorrectly. Unfortunately, the CLISP
+documentation doesn't specify what errors might be signaled by PROBE-FILE and probe-directory,
+and experimentation seems to show that they signal simple-file-errors in most erroneous
+situations.) |#
+(defun file-exists-p (pathname)
+  #+(or sbcl lispworks openmcl)
+  (probe-file pathname)
+
+  #+(or allegro cmu)
+  (or (probe-file (pathname-as-directory pathname))
+      (probe-file pathname))
+
+  #+clisp
+  (or (ignore-errors
+       (probe-file (pathname-as-file pathname)))
+      (ignore-errors
+       (let ((directory-form (pathname-as-directory pathname)))
+         (when (ext:probe-directory directory-form)
+           directory-form))))
+
+  #-(or sbcl smu lispworks openmcl allegro clisp)
+  (error "file-exists-p not implemented"))
+#| The function pathname-as-file that you need for the CLISP implementation of
+file-exists-p is the inverse of the previously defined pathname-as-directory,
+returning a pathname that's the file form equivalent of its argument. This function,
+despite being needed here only by CLISP, is generally useful, so define it for all
+implementations and make it part of the library. |#
+(defun pathname-as-file (name)
+  (let ((pathname (pathname name)))
+    (when (wild-pathname-p pathname)
+      (error "Can't reliably convert wild pathnames."))
+    (if (directory-pathname-p name)
+        (let* ((directory (pathname-directory pathname))
+               (name-and-type (pathname (first (last directory)))))
+          (make-pathname
+           :directory (butlast directory)
+           :name (pathname-name name-and-type)
+           :type (pathname-type name-and-type)
+           :defaults pathname))
+        pathname)))
+#| Walking a Directory Tree
+Finally, to round out this library, you can implement a function called walk-directory.
+Unlike the functions defined previously, this function doesn't need to do much of anything
+to smooth over implementation differences; it just needs to use the functions you've already
+defined. However, it's quite handy, and you'll use it several times in subsequent chapters.
+It will take the name of a directory and a function and call the function on the pathnames
+of all the files under the directory, recursively. It will also take two keyword arguments
+:directories and :test. When :directories is true, it will call the function on the
+pathanmes of directories as well as regular files. The :test argument, if provided, specifies
+another function that's invoked on each pathname before the main function is; the main function
+will be called only if the test function returns true. |#
+(defun walk-directory (dirname fn &key directories (test (constantly t)))
+  (labels
+      ((walk (name)
+         (cond
+           ((directory-pathname-p name)
+            (when (and directories (funcall test name))
+              (funcall fn name))
+            (dolist (x (list-directory name))
+              (walk x)))
+           ((funcall test name) (funcall fn name)))))
+    (walk (pathname-as-directory dirname))))
+#| Now you have a useful library of functions for dealing with pathnames. As I mentioned, these
+functions will come in handy in later chapters, particularly Chapters 23 and 27, where you'll
+use walk-directory to crawl through directory trees containing spam messages and MP3 files.
+But before we get to that, though, I need to talk about object orientation, the topic of the
+next two chapters. |#
